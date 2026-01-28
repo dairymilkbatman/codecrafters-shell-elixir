@@ -20,6 +20,16 @@ defmodule CLI do
         IO.puts("#{args}")
         loop()
 
+      ["type" | argument] ->
+        case argument do
+          ["echo"] -> IO.puts("echo is a shell builtin")
+          ["exit"] -> IO.puts("exit is a shell builtin")
+          ["type"] -> IO.puts("type is a shell builtin")
+          _ -> IO.puts("#{argument}: not found")
+        end
+
+        loop()
+
       [unknown_cmd | _] ->
         IO.puts("#{unknown_cmd}: command not found")
         loop()
