@@ -3,20 +3,25 @@ defmodule CLI do
     loop()
   end
 
-  defp loop(_, :exit) do
-    System.halt(0)
-  end
+  defp loop(:ok, :exit), do: System.halt(0)
+  defp loop(_, :exit), do: System.halt(1)
 
   defp loop() do
     IO.write("$ ")
-    command = IO.gets("") |> String.trim()
+    input = IO.gets("") |> String.trim()
+    split_string = String.split(input, " ")
 
-    case command do
-      "exit" ->
+    case split_string do
+      ["exit" | _] ->
         loop(:ok, :exit)
 
-      _ ->
-        IO.puts("#{command}: command not found")
+      ["echo" | argument] ->
+        args = Enum.join(argument, " ")
+        IO.puts("#{args}")
+        loop()
+
+      [unknown_cmd | _] ->
+        IO.puts("#{unknown_cmd}: command not found")
         loop()
     end
   end
