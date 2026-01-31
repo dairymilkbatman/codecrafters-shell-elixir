@@ -1,4 +1,6 @@
 defmodule CLI do
+  require Logger
+
   def main(_args) do
     loop()
   end
@@ -22,10 +24,22 @@ defmodule CLI do
 
       ["type" | argument] ->
         case argument do
-          ["echo"] -> IO.puts("echo is a shell builtin")
-          ["exit"] -> IO.puts("exit is a shell builtin")
-          ["type"] -> IO.puts("type is a shell builtin")
-          _ -> IO.puts("#{argument}: not found")
+          ["echo"] ->
+            IO.puts("echo is a shell builtin")
+
+          ["ls"] ->
+            List.to_string(argument)
+            |> System.find_executable()
+            |> IO.puts()
+
+          ["exit"] ->
+            IO.puts("exit is a shell builtin")
+
+          ["type"] ->
+            IO.puts("type is a shell builtin")
+
+          _ ->
+            IO.puts("#{argument}: not found")
         end
 
         loop()
