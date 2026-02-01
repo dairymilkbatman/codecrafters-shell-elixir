@@ -1,5 +1,5 @@
 defmodule CLI do
-  require Logger
+  @builtin_commands ["echo", "exit", "type"]
 
   def main(_args) do
     loop()
@@ -10,43 +10,56 @@ defmodule CLI do
 
   defp loop() do
     IO.write("$ ")
-    input = IO.gets("") |> String.trim()
-    split_string = String.split(input, " ")
 
-    case split_string do
-      ["exit" | _] ->
-        loop(:ok, :exit)
+    command_result =
+      IO.gets("")
+      |> String.trim()
+      |> String.split(" ")
+      |> process_command()
 
-      ["echo" | argument] ->
-        args = Enum.join(argument, " ")
-        IO.puts("#{args}")
-        loop()
-
-      ["type" | argument] ->
-        case argument do
-          ["echo"] ->
-            IO.puts("echo is a shell builtin")
-
-          ["ls"] ->
-            List.to_string(argument)
-            |> System.find_executable()
-            |> IO.puts()
-
-          ["exit"] ->
-            IO.puts("exit is a shell builtin")
-
-          ["type"] ->
-            IO.puts("type is a shell builtin")
-
-          _ ->
-            IO.puts("#{argument}: not found")
-        end
-
-        loop()
-
-      [unknown_cmd | _] ->
-        IO.puts("#{unknown_cmd}: command not found")
-        loop()
+    case command_result do
+      # Don't loop again, exit handlers already called
+      :exit -> :ok
+      # Continue looping for all other commands matching :continue
+      _ -> loop()
     end
+  end
+
+  defp process_command(["exit" | _]) do
+    loop(:ok, :exit)
+    :exit
+  end
+
+  defp process_command(["echo" | arguments]) do
+    arguments
+    |> Enum.join(" ")
+    |> IO.puts()
+
+    :continue
+  end
+
+  defp process_command(["type" | [command]]) do
+    cond do
+      command in @builtin_commands ->
+        IO.puts("#{command} is a shell builtin")
+
+      executable_path = System.find_executable(command) ->
+        IO.puts("#{command} is #{executable_path}")
+
+      true ->
+        IO.puts("#{command}: not found")
+    end
+
+    :continue
+  end
+
+  defp process_command(["type" | _]) do
+    IO.puts("type: too many arguments")
+    :continue
+  end
+
+  defp process_command([command | _]) do
+    IO.puts("#{command}: command not found")
+    :continue
   end
 end
