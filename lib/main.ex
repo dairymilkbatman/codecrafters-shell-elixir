@@ -1,10 +1,7 @@
 defmodule CLI do
   @builtin_commands ["echo", "exit", "type"]
 
-  require Logger
-
   def main(_args) do
-    Logger.info("Starting Loop")
     loop()
   end
 
