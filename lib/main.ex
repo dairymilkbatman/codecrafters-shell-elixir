@@ -1,14 +1,17 @@
 defmodule CLI do
   @builtin_commands ["echo", "exit", "type"]
 
+  require Logger
+
   def main(_args) do
+    Logger.info("Starting Loop")
     loop()
   end
 
   defp loop(:ok, :exit), do: System.halt(0)
   defp loop(_, :exit), do: System.halt(1)
 
-  defp loop() do
+  def loop() do
     IO.write("$ ")
 
     command_result =
@@ -36,6 +39,14 @@ defmodule CLI do
     |> IO.puts()
 
     :continue
+  end
+
+  # This works, needs to be dynamic
+
+  defp process_command(["touch" | [arguments]]) do
+    if System.find_executable("touch") do
+      System.cmd("touch", [arguments], into: IO.stream())
+    end
   end
 
   defp process_command(["type" | [command]]) do
