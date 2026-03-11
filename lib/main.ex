@@ -35,6 +35,10 @@ defmodule CLI do
       |> String.split(" ")
 
     case command_split do
+      ["pwd", _] ->
+        File.cwd()
+        loop()
+
       ["echo" | args] ->
         text = Enum.join(args, " ")
         IO.puts("#{text}")
@@ -43,7 +47,6 @@ defmodule CLI do
       ["exit" | _] ->
         loop(:ok, :exit)
 
-      # NOTE: this cannot take multiple args
       ["type", cmd] ->
         print_command_type(cmd)
         loop()
