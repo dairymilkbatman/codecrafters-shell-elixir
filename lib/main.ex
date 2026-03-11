@@ -1,5 +1,5 @@
 defmodule CLI do
-  @builtin_commands ["echo", "exit", "type"]
+  @builtins ["echo", "exit", "type"]
 
   def main(_args) do
     loop()
@@ -8,66 +8,56 @@ defmodule CLI do
   defp loop(:ok, :exit), do: System.halt(0)
   defp loop(_, :exit), do: System.halt(1)
 
-  def loop() do
+  defp find_exec(cmd) do
+    case System.find_executable(cmd) do
+      nil -> {:error, :not_found, cmd}
+      cmd_path -> {:ok, cmd_path, cmd}
+    end
+  end
+
+  defp print_command_type(cmd) when cmd in @builtins do
+    IO.puts("#{cmd} is a shell builtin")
+  end
+
+  defp print_command_type(cmd) do
+    case find_exec(cmd) do
+      {:error, :not_found, cmd} -> IO.puts("#{cmd}: not found")
+      {:ok, cmd_path, _} -> IO.puts(cmd_path)
+    end
+  end
+
+  defp loop() do
     IO.write("$ ")
 
-    command_result =
+    command_split =
       IO.gets("")
       |> String.trim()
       |> String.split(" ")
-      |> process_command()
 
-    case command_result do
-      # Don't loop again, exit handlers already called
-      :exit -> :ok
-      # Continue looping for all other commands matching :continue
-      _ -> loop()
+    case command_split do
+      ["echo" | args] ->
+        text = Enum.join(args, " ")
+        IO.puts("#{text}")
+        loop()
+
+      ["exit" | _] ->
+        loop(:ok, :exit)
+
+      # NOTE: this cannot take multiple args
+      ["type", cmd] ->
+        print_command_type(cmd)
+        loop()
+
+      [cmd | args] ->
+        case find_exec(cmd) do
+          {:error, :not_found, cmd} ->
+            IO.puts("#{cmd}: command not found")
+
+          {:ok, cmd_path, cmd} ->
+            System.cmd(cmd_path, args, arg0: cmd, into: IO.stream())
+        end
+
+        loop()
     end
-  end
-
-  defp process_command(["exit" | _]) do
-    loop(:ok, :exit)
-    :exit
-  end
-
-  defp process_command(["echo" | arguments]) do
-    arguments
-    |> Enum.join(" ")
-    |> IO.puts()
-
-    :continue
-  end
-
-  # This works, needs to be dynamic
-
-  defp process_command(["touch" | [arguments]]) do
-    if System.find_executable("touch") do
-      System.cmd("touch", [arguments], into: IO.stream())
-    end
-  end
-
-  defp process_command(["type" | [command]]) do
-    cond do
-      command in @builtin_commands ->
-        IO.puts("#{command} is a shell builtin")
-
-      executable_path = System.find_executable(command) ->
-        IO.puts("#{command} is #{executable_path}")
-
-      true ->
-        IO.puts("#{command}: not found")
-    end
-
-    :continue
-  end
-
-  defp process_command(["type" | _]) do
-    IO.puts("type: too many arguments")
-    :continue
-  end
-
-  defp process_command([command | _]) do
-    IO.puts("#{command}: command not found")
-    :continue
   end
 end
