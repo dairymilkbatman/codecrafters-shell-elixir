@@ -1,5 +1,5 @@
 defmodule CLI do
-  @builtins ["echo", "exit", "type"]
+  @builtins ["echo", "exit", "type", "pwd"]
 
   def main(_args) do
     loop()
