@@ -33,16 +33,17 @@ defmodule CLI do
       IO.gets("")
       |> String.trim()
       |> String.split(" ")
+      |> dbg()
 
     case command_split do
-      ["pwd" | _] ->
+      # Since String.split mutates everything into a [], we need to use the '|' -I think, anyway.
+      ["pwd"] ->
         case File.cwd() do
           {:ok, dir} ->
             IO.puts(dir)
 
           {:error, _} ->
-            IO.puts("It is fucked mate")
-            |> dbg()
+            IO.puts("You're never going to see this message LOL")
         end
 
         loop()
