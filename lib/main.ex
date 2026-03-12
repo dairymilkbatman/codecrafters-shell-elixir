@@ -35,7 +35,7 @@ defmodule CLI do
       |> String.split(" ")
 
     case command_split do
-      ["pwd", _] ->
+      ["pwd" | _] ->
         File.cwd()
         loop()
 
