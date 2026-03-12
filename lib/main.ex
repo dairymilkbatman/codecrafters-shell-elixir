@@ -36,7 +36,15 @@ defmodule CLI do
 
     case command_split do
       ["pwd" | _] ->
-        File.cwd()
+        case File.cwd() do
+          {:ok, dir} ->
+            IO.puts(dir)
+
+          {:error, _} ->
+            IO.puts("It is fucked mate")
+            |> dbg()
+        end
+
         loop()
 
       ["echo" | args] ->
