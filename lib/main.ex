@@ -33,7 +33,6 @@ defmodule CLI do
       IO.gets("")
       |> String.trim()
       |> String.split(" ")
-      |> dbg()
 
     case command_split do
       # Since String.split mutates everything into a [], we need to use the '|' -I think, anyway.
