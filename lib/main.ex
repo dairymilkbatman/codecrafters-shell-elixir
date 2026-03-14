@@ -35,6 +35,15 @@ defmodule CLI do
       |> String.split(" ")
 
     case command_split do
+      ["cd", dir] ->
+        with :ok <- File.cd(dir) do
+          loop()
+        else
+          {:error, _reason} ->
+            IO.puts("cd: <#{dir}>: No such file or directory")
+            loop()
+        end
+
       # Since String.split mutates everything into a [], we need to use the '|' -I think, anyway.
       ["pwd"] ->
         case File.cwd() do
