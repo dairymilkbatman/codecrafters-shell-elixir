@@ -40,7 +40,7 @@ defmodule CLI do
           loop()
         else
           {:error, _reason} ->
-            IO.puts("cd: <#{dir}>: No such file or directory")
+            IO.puts("cd: #{dir}: No such file or directory")
             loop()
         end
 
