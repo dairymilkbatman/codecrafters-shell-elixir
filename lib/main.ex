@@ -35,6 +35,11 @@ defmodule CLI do
       |> String.split(" ")
 
     case command_split do
+      ["cd", "~"] ->
+        home = System.user_home()
+        File.cd(home)
+        loop()
+
       ["cd", dir] ->
         with :ok <- File.cd(dir) do
           loop()
