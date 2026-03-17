@@ -64,6 +64,7 @@ defmodule CLI do
         loop()
 
       ["echo" | args] ->
+        # Enum.join() is necessary for string parsing.
         text = Enum.join(args, " ")
         IO.puts("#{text}")
         loop()
