@@ -32,7 +32,9 @@ defmodule CLI do
     command_split =
       IO.gets("")
       |> String.trim()
-      |> String.split(" ")
+      |> OptionParser.split()
+
+    # |> String.split(" ")
 
     case command_split do
       ["cd", "~"] ->
@@ -62,8 +64,8 @@ defmodule CLI do
         loop()
 
       ["echo" | args] ->
-        text = Enum.join(args, " ")
-        IO.puts("#{text}")
+        # text = Enum.join(args, " ")
+        IO.puts("#{args}")
         loop()
 
       ["exit" | _] ->
