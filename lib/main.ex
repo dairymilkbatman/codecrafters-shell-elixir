@@ -33,7 +33,6 @@ defmodule CLI do
       IO.gets("")
       |> String.trim()
       |> OptionParser.split()
-      |> dbg()
 
     # |> String.split(" ")
 
