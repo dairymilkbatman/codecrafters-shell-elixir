@@ -33,6 +33,7 @@ defmodule CLI do
       IO.gets("")
       |> String.trim()
       |> OptionParser.split()
+      |> dbg()
 
     # |> String.split(" ")
 
@@ -64,8 +65,8 @@ defmodule CLI do
         loop()
 
       ["echo" | args] ->
-        # text = Enum.join(args, " ")
-        IO.puts("#{args}")
+        text = Enum.join(args, " ")
+        IO.puts("#{text}")
         loop()
 
       ["exit" | _] ->
