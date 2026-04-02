@@ -2,90 +2,80 @@ defmodule CLI do
   @builtins ["echo", "exit", "type", "pwd"]
 
   def main(_args) do
+    # initialize supervisor here before calling loop()
     loop()
   end
 
   defp loop(:ok, :exit), do: System.halt(0)
   defp loop(_, :exit), do: System.halt(1)
 
-  defp find_exec(cmd) do
-    case System.find_executable(cmd) do
-      nil -> {:error, :not_found, cmd}
-      cmd_path -> {:ok, cmd_path, cmd}
-    end
-  end
-
-  defp print_command_type(cmd) when cmd in @builtins do
-    IO.puts("#{cmd} is a shell builtin")
-  end
-
-  defp print_command_type(cmd) do
-    case find_exec(cmd) do
-      {:error, :not_found, cmd} -> IO.puts("#{cmd}: not found")
-      {:ok, cmd_path, _} -> IO.puts(cmd_path)
-    end
-  end
-
   defp loop() do
     IO.write("$ ")
 
-    command_split =
+    [cmd | args] =
       IO.gets("")
       |> String.trim()
-      |> OptionParser.split()
+      |> Args.parse()
 
-    # |> String.split(" ")
+    execute(cmd, args)
+    loop()
+  end
 
-    case command_split do
-      ["cd", "~"] ->
-        home = System.user_home()
-        File.cd(home)
-        loop()
+  # |> OptionParser.split()
+  # |> String.split(" ")
 
-      ["cd", dir] ->
-        with :ok <- File.cd(dir) do
-          loop()
-        else
-          {:error, _reason} ->
-            IO.puts("cd: #{dir}: No such file or directory")
-            loop()
-        end
+  defp execute("cd", ["~"]) do
+    home = System.user_home()
+    File.cd(home)
+  end
 
-      # Since String.split mutates everything into a [], we need to use the '|' -I think, anyway.
-      ["pwd"] ->
-        case File.cwd() do
-          {:ok, dir} ->
-            IO.puts(dir)
+  defp execute("type", [cmd]) when cmd in @builtins, do: IO.puts("#{cmd} is a shell builtin")
 
-          {:error, _} ->
-            IO.puts("You're never going to see this message LOL")
-        end
+  defp execute("type", [cmd]) do
+    case System.find_executable(cmd) do
+      nil -> IO.puts("#{cmd}: not found")
+      cmd_path -> IO.puts(cmd_path)
+    end
+  end
 
-        loop()
+  defp execute("cd", [dir]) do
+    home = System.fetch_env!("HOME")
+    dir = String.replace(dir, "~", home)
 
-      ["echo" | args] ->
-        # Enum.join() is necessary for string parsing.
-        text = Enum.join(args, " ")
-        IO.puts("#{text}")
-        loop()
+    case File.cd(dir) do
+      :ok ->
+        nil
 
-      ["exit" | _] ->
-        loop(:ok, :exit)
+      {:error, :enoent} ->
+        IO.puts("cd: #{dir}: No such file or directory")
+    end
+  end
 
-      ["type", cmd] ->
-        print_command_type(cmd)
-        loop()
+  defp execute("pwd", _args) do
+    case File.cwd() do
+      {:ok, dir} -> IO.puts(dir)
+      {:error, _} -> IO.puts("Your never going to see this LOL")
+    end
+  end
 
-      [cmd | args] ->
-        case find_exec(cmd) do
-          {:error, :not_found, cmd} ->
-            IO.puts("#{cmd}: command not found")
+  defp execute("echo", [args]) do
+    args
+    |> Enum.join(" ")
+    # |> String.replace("\\", "")
+    |> IO.puts()
+  end
 
-          {:ok, cmd_path, cmd} ->
-            System.cmd(cmd_path, args, arg0: cmd, into: IO.stream())
-        end
+  defp execute("exit", _), do: loop(:ok, :exit)
 
-        loop()
+  # Catch any-clause
+  defp execute(cmd, [args]) do
+    case System.find_executable(cmd) do
+      nil ->
+        IO.puts("#{cmd}: command not found")
+
+      cmd_path ->
+        {:ok, cmd_path, cmd}
+        System.cmd(cmd_path, args, arg0: cmd, into: IO.stream())
     end
   end
 end
